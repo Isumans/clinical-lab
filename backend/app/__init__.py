@@ -1,0 +1,1 @@
+"""LabSync backend application package."""

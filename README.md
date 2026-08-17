@@ -1,36 +1,217 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LabSync
 
-## Getting Started
+LabSync is a minimal laboratory management system being built incrementally as a stable application before DevOps and DevSecOps infrastructure is introduced.
 
-First, run the development server:
+## Current stage
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+The Phase 1 application currently provides:
+
+- A modular FastAPI backend and PostgreSQL database
+- SQLAlchemy models and Alembic migrations
+- Staff users with `ADMIN`, `RECEPTIONIST`, and `TECHNICIAN` roles
+- Argon2 password hashing and JWT authentication
+- Login, logout, and current-user endpoints
+- Reusable backend role guards
+- A responsive Next.js staff login and authenticated role-aware dashboard
+- Backend authentication tests
+- A public landing page with role-aware dashboard access
+- A reusable authenticated dashboard shell
+- Patient registration, search, filtering, details, and editing
+- Backend role enforcement for administrators and receptionists
+- A dashboard summary with the live patient count
+- A shared shadcn/ui component system themed for LabSync
+- Laboratory Test Catalog search, filtering, details, creation, editing, and activation
+- A scoped three-step test configuration flow
+- Appointment search, filtering, creation, and details
+- Existing-patient selection plus an embedded create-patient dialog
+- One independently tracked `AppointmentTest` record per ordered test
+- Live dashboard counts for today's appointments and test processing status
+- Sample collection and independently tracked test processing
+- Technician result entry with units, reference ranges, and notes
+- Result authorization and recheck handling
+- On-screen viewing of authorized results
+- Reports search, progress tracking, and appointment-level report details
+- Administrator-only team management with role assignment and account activation controls
+- One-time temporary passwords with mandatory first-login password replacement
+
+PDF reports and all DevOps infrastructure remain intentionally deferred.
+
+## Project structure
+
+```text
+clinical-lab-system/
+|-- backend/
+|   |-- alembic/
+|   |-- app/
+|   |   |-- core/
+|   |   |-- db/
+|   |   |-- dependencies/
+|   |   |-- models/
+|   |   |-- routes/
+|   |   |-- schemas/
+|   |   |-- scripts/
+|   |   `-- services/
+|   |-- tests/
+|   |-- .env.example
+|   |-- alembic.ini
+|   `-- requirements.txt
+`-- frontend/
+    |-- app/
+    |-- components/
+    |-- public/
+    |-- services/
+    |-- types/
+    `-- package.json
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Backend setup with Git Bash
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+PostgreSQL must be installed and running. From `backend/`:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+python -m venv .venv
+source .venv/Scripts/activate
+python -m pip install -r requirements.txt
+cp -n .env.example .env
+```
 
-## Learn More
+Generate a JWT signing secret:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(48))"
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Copy the output into `LABSYNC_JWT_SECRET_KEY` in `backend/.env`. Also update `LABSYNC_DATABASE_URL` with your local PostgreSQL credentials. Never commit `.env`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Apply database migrations:
 
-## Deploy on Vercel
+```bash
+python -m alembic upgrade head
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Create the initial administrator. The command securely prompts for a password and requires at least 12 characters:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+python -m app.scripts.create_admin --name "Your Name" --email "admin@example.com"
+```
+
+Run the API:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+Useful endpoints:
+
+- API documentation: `http://127.0.0.1:8000/docs`
+- Health check: `http://127.0.0.1:8000/health`
+- Login: `POST /auth/login`
+- Current user: `GET /auth/me`
+- Logout: `POST /auth/logout`
+- Patient list/search: `GET /patients`
+- Register patient: `POST /patients`
+- Patient details: `GET /patients/{id}`
+- Update patient: `PUT /patients/{id}`
+- Dashboard metrics: `GET /dashboard/summary`
+- Test catalog: `GET /tests`
+- Create test: `POST /tests`
+- Test details: `GET /tests/{id}`
+- Update test: `PUT /tests/{id}`
+- Activate/deactivate test: `PATCH /tests/{id}/status`
+- Appointment list/search: `GET /appointments`
+- Create appointment: `POST /appointments`
+- Appointment details: `GET /appointments/{id}`
+- Mark sample collected: `PATCH /appointment-tests/{id}/status`
+- Enter test result: `POST /appointment-tests/{id}/result`
+- Authorize or flag a result: `POST /appointment-tests/{id}/authorize`
+- Report work queue: `GET /reports`
+- Report details: `GET /reports/{appointment_id}`
+- Team list/search: `GET /users`
+- Create team member: `POST /users`
+- Activate/deactivate team member: `PATCH /users/{id}/status`
+- Replace temporary password: `POST /auth/change-password`
+
+Run backend tests:
+
+```bash
+python -m pytest
+```
+
+## Frontend setup with Git Bash
+
+From `frontend/`:
+
+```bash
+npm install
+cp -n .env.example .env.local
+npm run dev
+```
+
+Open `http://localhost:3000`. This is the public entry point. Staff login is at `/login`. The authenticated workspace includes:
+
+- Dashboard: `/dashboard`
+- Patients: `/dashboard/patients`
+- Test Catalog: `/dashboard/tests`
+- Appointments: `/dashboard/appointments`
+- Laboratory Reports: `/dashboard/reports`
+- Team Settings (administrators only): `/dashboard/settings`
+
+The default frontend configuration connects to the backend at `http://127.0.0.1:8000`.
+
+Run frontend checks:
+
+```bash
+npm run lint
+npm run build
+```
+
+## Supported Phase 1 workflow
+
+1. An administrator creates active laboratory tests.
+2. A receptionist or administrator registers a patient and creates an appointment.
+3. A technician marks each collected sample as `IN_PROGRESS` from appointment details.
+4. The appointment appears in Reports and the technician enters test values.
+5. Saving a value changes that ordered test to `COMPLETED`.
+6. A technician authorizes the result or flags it as `RECHECK_REQUIRED`.
+7. Authorized results are available through the on-screen result viewer.
+
+## Adding a team member locally
+
+1. Sign in as an administrator and open **Settings**.
+2. Select **Add New User**, enter the staff member's details, and assign a role.
+3. Copy the generated temporary password from the one-time confirmation dialog.
+4. Share it directly with the staff member during local development.
+5. At first login, the staff member must replace it with a password of at least 12 characters before accessing LabSync.
+
+No email is sent in Phase 1. Email-based account activation can be added after deployment infrastructure and an email provider are selected.
+
+## Phase 1 release-readiness checks
+
+Run these checks before creating the Phase 1 Git tag:
+
+```bash
+cd backend
+source .venv/Scripts/activate
+python -m pytest -q
+python -m alembic check
+python -m pip check
+
+cd ../frontend
+npm run lint
+npm run build
+npm audit --omit=dev
+```
+
+The automated acceptance suite includes the complete Admin → Receptionist → Technician workflow, temporary-password replacement, role restrictions, patient registration, appointment creation, sample collection, result entry, authorization, result viewing, and dashboard access.
+
+Before tagging the release, manually verify in a browser:
+
+- Desktop and mobile navigation
+- Landing page, login, and logout
+- One-time temporary-password copy dialog
+- First-login password replacement
+- Empty, loading, validation, and API-error states
+- Dashboard metrics after completing a laboratory result
+- Visual consistency of patients, tests, appointments, reports, and settings
+
+Do not commit `backend/.env`, `frontend/.env.local`, credentials, generated build output, virtual environments, or dependency directories.

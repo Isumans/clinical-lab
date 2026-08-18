@@ -277,3 +277,45 @@ docker compose down --volumes
 ```
 
 `NEXT_PUBLIC_API_URL` is embedded during the frontend image build. If it changes, rebuild the frontend image with `docker compose build frontend` before restarting it.
+
+## DevOps Stage 2: verify published release images
+
+The release Compose file runs the versioned images published to GitHub Container Registry and contains no local build directives. It uses the same `labsync` Compose project and `postgres_data` volume as the development stack, so switching configurations preserves the existing PostgreSQL data.
+
+Authenticate to GHCR and create the ignored release environment file:
+
+```bash
+docker login ghcr.io -u Isumans
+cp .env.release.example .env.release
+```
+
+When Docker requests a password, use a GitHub classic personal access token with `read:packages`. In `.env.release`, replace the placeholders with the same database password and JWT secret currently used by the existing stack. PostgreSQL does not change the stored user's password when an initialized volume is restarted with a different environment value.
+
+Pull and start the published release without building local source:
+
+```bash
+docker compose -f compose.release.yaml --env-file .env.release pull
+docker compose -f compose.release.yaml --env-file .env.release up -d
+docker compose -f compose.release.yaml --env-file .env.release ps
+```
+
+Verify both applications:
+
+```bash
+curl http://localhost:8000/health
+curl --fail --output /dev/null http://localhost:3000
+```
+
+Confirm that the running containers use GHCR images:
+
+```bash
+docker compose -f compose.release.yaml --env-file .env.release images
+```
+
+Stop the release stack without deleting PostgreSQL data:
+
+```bash
+docker compose -f compose.release.yaml --env-file .env.release down
+```
+
+Never add `--volumes` unless the local database is intentionally being erased.

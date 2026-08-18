@@ -35,6 +35,7 @@ yarn-error.log*
 !.env.example
 !**/.env.example
 !.env.docker.example
+!.env.release.example
 
 # Python
 __pycache__/

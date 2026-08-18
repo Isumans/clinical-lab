@@ -1,0 +1,77 @@
+name: Container CI
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "compose.yaml"
+      - ".env.docker.example"
+      - ".github/workflows/container-ci.yml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "compose.yaml"
+      - ".env.docker.example"
+      - ".github/workflows/container-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: container-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-scan:
+    name: Build and scan ${{ matrix.component }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - component: backend
+            context: backend
+            image: labsync-backend
+          - component: frontend
+            context: frontend
+            image: labsync-frontend
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Build production image
+        env:
+          IMAGE_TAG: ${{ matrix.image }}:ci-${{ github.sha }}
+        run: docker build --tag "$IMAGE_TAG" "${{ matrix.context }}"
+
+      - name: Verify image runs as non-root
+        env:
+          IMAGE_TAG: ${{ matrix.image }}:ci-${{ github.sha }}
+        run: |
+          user_id="$(docker run --rm --entrypoint id "$IMAGE_TAG" -u)"
+          if [ "$user_id" = "0" ]; then
+            echo "The ${{ matrix.component }} image runs as root."
+            exit 1
+          fi
+          echo "The ${{ matrix.component }} image runs as UID $user_id."
+
+      - name: Scan fixable critical and high vulnerabilities
+        uses: docker/scout-action@v1
+        with:
+          command: cves
+          image: local://${{ matrix.image }}:ci-${{ github.sha }}
+          only-severities: critical,high
+          only-fixed: true
+          exit-code: true
+          summary: true
+          write-comment: false
+          dockerhub-user: ${{ secrets.DOCKER_SCOUT_HUB_USER }}
+          dockerhub-password: ${{ secrets.DOCKER_SCOUT_HUB_TOKEN }}

@@ -215,3 +215,65 @@ Before tagging the release, manually verify in a browser:
 - Visual consistency of patients, tests, appointments, reports, and settings
 
 Do not commit `backend/.env`, `frontend/.env.local`, credentials, generated build output, virtual environments, or dependency directories.
+
+## DevOps Stage 1: local containers
+
+This stage containerizes the existing Phase 1 application only. It does not add CI/CD, cloud infrastructure, Kubernetes, Terraform, monitoring, or automated deployment.
+
+Prerequisites:
+
+- Docker Desktop with Docker Compose v2
+- Ports `3000` and `8000` available
+- Port `5433` available for optional host access to the containerized PostgreSQL instance
+
+Create the Compose environment from the repository root:
+
+```bash
+cp .env.docker.example .env
+python -c "import secrets; print(secrets.token_urlsafe(48))"
+```
+
+Replace `LABSYNC_JWT_SECRET_KEY` in the root `.env` with the generated value. Replace both occurrences of the example database password with the same URL-safe password. The root `.env` is ignored by Git.
+
+Build and start the stack:
+
+```bash
+docker compose up --build -d
+docker compose ps
+```
+
+The backend waits for PostgreSQL to become healthy, applies Alembic migrations, and then starts FastAPI. The frontend waits for the backend health check before starting.
+
+Create the first administrator:
+
+```bash
+docker compose exec backend python -m app.scripts.create_admin --name "Your Name" --email "admin@example.com"
+```
+
+Open:
+
+- LabSync: `http://localhost:3000`
+- FastAPI documentation: `http://localhost:8000/docs`
+- Health endpoint: `http://localhost:8000/health`
+- PostgreSQL from the host: `localhost:5433`
+
+Inspect logs and health:
+
+```bash
+docker compose logs -f backend frontend
+curl http://localhost:8000/health
+```
+
+Stop containers without deleting database data:
+
+```bash
+docker compose down
+```
+
+Delete the local container database only when you intentionally want a clean reset:
+
+```bash
+docker compose down --volumes
+```
+
+`NEXT_PUBLIC_API_URL` is embedded during the frontend image build. If it changes, rebuild the frontend image with `docker compose build frontend` before restarting it.

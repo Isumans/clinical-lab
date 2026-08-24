@@ -7,8 +7,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env.release}
       POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env.release}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.release}
-    ports:
-      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
     healthcheck:
@@ -24,15 +22,13 @@ services:
     pull_policy: always
     environment:
       LABSYNC_APP_NAME: LabSync API
-      LABSYNC_APP_VERSION: ${LABSYNC_APP_VERSION:-0.3.0}
+      LABSYNC_APP_VERSION: ${LABSYNC_APP_VERSION:-0.3.2}
       LABSYNC_DEBUG: "false"
       LABSYNC_DATABASE_URL: ${LABSYNC_DATABASE_URL:?Set LABSYNC_DATABASE_URL in .env.release}
       LABSYNC_JWT_SECRET_KEY: ${LABSYNC_JWT_SECRET_KEY:?Set LABSYNC_JWT_SECRET_KEY in .env.release}
       LABSYNC_JWT_ALGORITHM: HS256
       LABSYNC_ACCESS_TOKEN_EXPIRE_MINUTES: 30
       LABSYNC_CORS_ORIGINS: ${LABSYNC_CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
-    ports:
-      - "${BACKEND_PORT:-8000}:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -42,6 +38,8 @@ services:
   frontend:
     image: ${FRONTEND_IMAGE:?Set FRONTEND_IMAGE in .env.release}
     pull_policy: always
+    environment:
+      LABSYNC_INTERNAL_API_URL: http://backend:8000
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     depends_on:

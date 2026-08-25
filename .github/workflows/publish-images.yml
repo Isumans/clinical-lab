@@ -77,3 +77,10 @@ jobs:
           cache-to: type=gha,mode=max,scope=${{ matrix.component }}
           provenance: mode=max
           sbom: true
+
+  deploy:
+    name: Deploy published release
+    needs: publish
+    uses: ./.github/workflows/deploy-gcp.yml
+    with:
+      version: ${{ github.ref_name }}

@@ -22,7 +22,7 @@ services:
     pull_policy: always
     environment:
       LABSYNC_APP_NAME: LabSync API
-      LABSYNC_APP_VERSION: ${LABSYNC_APP_VERSION:-0.3.2}
+      LABSYNC_APP_VERSION: ${LABSYNC_APP_VERSION:-0.3.3}
       LABSYNC_DEBUG: "false"
       LABSYNC_DATABASE_URL: ${LABSYNC_DATABASE_URL:?Set LABSYNC_DATABASE_URL in .env.release}
       LABSYNC_JWT_SECRET_KEY: ${LABSYNC_JWT_SECRET_KEY:?Set LABSYNC_JWT_SECRET_KEY in .env.release}

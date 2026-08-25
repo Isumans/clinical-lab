@@ -1,0 +1,16 @@
+logging:
+  receivers:
+    labsync_docker_logs:
+      type: files
+      include_paths:
+        - /var/lib/docker/containers/*/*.log
+      record_log_file_path: true
+      wildcard_refresh_interval: 30s
+  processors:
+    parse_docker_json:
+      type: parse_json
+  service:
+    pipelines:
+      labsync_docker_pipeline:
+        receivers: [labsync_docker_logs]
+        processors: [parse_docker_json]

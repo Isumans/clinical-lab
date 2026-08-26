@@ -1,6 +1,6 @@
 # LabSync
 
-LabSync is a minimal laboratory management system being built incrementally as a stable application before DevOps and DevSecOps infrastructure is introduced.
+LabSync is a minimal laboratory management system and a practical workload for learning DevOps and DevSecOps delivery practices.
 
 ## Current stage
 
@@ -34,7 +34,13 @@ The Phase 1 application currently provides:
 - Administrator-only team management with role assignment and account activation controls
 - One-time temporary passwords with mandatory first-login password replacement
 
-PDF reports and all DevOps infrastructure remain intentionally deferred.
+PDF reports remain deferred. Phase 2 now includes hardened containers, CI,
+security scanning, GHCR publishing, automated deployment to Google Compute
+Engine, health-checked rollback, OS Login and IAP access, Secret Manager,
+centralized logging and alerts, and validated PostgreSQL backup and recovery.
+
+Production procedures are documented in the
+[operations runbooks](docs/operations/README.md).
 
 ## Project structure
 

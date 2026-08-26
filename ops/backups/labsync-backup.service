@@ -1,0 +1,19 @@
+[Unit]
+Description=LabSync PostgreSQL backup to Cloud Storage
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=isuma
+Group=isuma
+SupplementaryGroups=docker
+EnvironmentFile=/etc/labsync-backup.conf
+Environment=CLOUDSDK_CONFIG=/var/tmp/labsync-gcloud
+Environment=DOCKER_CONFIG=/var/tmp/labsync-docker
+ExecStart=/usr/local/sbin/labsync-backup
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true

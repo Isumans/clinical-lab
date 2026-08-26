@@ -7,6 +7,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+RUN apt-get update \
+    && apt-get upgrade --yes --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN addgroup --system labsync && adduser --system --ingroup labsync --no-create-home labsync
 
 COPY requirements-prod.txt ./

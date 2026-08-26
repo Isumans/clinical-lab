@@ -5,7 +5,7 @@
 1. Confirm backend, frontend, and container CI are green.
 2. Publish a semantic image version through the release workflow.
 3. Run the `Deploy to GCP` workflow with the published version, such as
-   `0.3.3`.
+   `0.3.4`.
 4. Confirm the workflow's health verification succeeds.
 5. Open an IAP tunnel and perform the smoke tests below.
 

@@ -1,0 +1,14 @@
+[Unit]
+Description=Check the private LabSync health endpoint
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=nobody
+Group=nogroup
+ExecStart=/usr/local/bin/labsync-healthcheck
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict

@@ -42,6 +42,12 @@ centralized logging and alerts, and validated PostgreSQL backup and recovery.
 Production procedures are documented in the
 [operations runbooks](docs/operations/README.md).
 
+The complete application, DevOps, and DevSecOps journey is explained in the
+[LabSync learning guide and project report](docs/LabSync-DevOps-Learning-Guide.md).
+The exact stages, commands, execution locations, checks, and operational meaning
+are captured in the
+[LabSync end-to-end workflow playbook](docs/LabSync-End-to-End-Workflow-Playbook.md).
+
 ## Project structure
 
 ```text
